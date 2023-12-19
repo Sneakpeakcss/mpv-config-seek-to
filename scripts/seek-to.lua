@@ -21,21 +21,42 @@ local history_position = 1
 -- timer to redraw periodically the message
 -- to avoid leaving bindings when the seeker disappears for whatever reason
 -- pretty hacky tbh
-local timer = nil
+local blink_timer = nil
 local timer_duration = 3
+local blink_rate = 2	-- ( 1 / blink_rate )
+
 
 function show_seeker()
-    local prepend_char = {'','',':','',':','','.','',''}
+    local selection_color = "{\\c&46CFFF&}"
+    local selection_border_color = ""		-- "{\\3c&H0000FF&}"
+
+    local underline_on = "{\\u1}"		-- Enable underline
+    local underline_off = "{\\u0}"		-- Disable underline
+    local underline = "{\\u1}"			-- Always start with underline on
+
+    local ss = "{\\fscx0}"			-- Scale 0 to limit additional width of the hairspace
+    local se = "{\\fscx100}"			-- Reset scale
+    local fb = "{\\b1}"				-- Force bold font to even out the spacing
+    local hs = ss .. string.char(0xE2, 0x80, 0x8A) .. se -- Insert 'hair space' after first digit to avoid shifting when two 1's are beside each other (11:11:11.111)
+
+    local prepend_char = {'','' .. hs,':','' .. hs,':','' .. hs,'.','' .. hs,'' .. hs}
     local str = ''
+
     for i = 1, 9 do
         str = str .. prepend_char[i]
         if i == cursor_position then
-            str = str .. '{\\b1}' .. history[history_position][i] .. '{\\r}'
+            if digit_switched then -- Force underline into _on state after switching to another digit
+                underline = underline_on
+                digit_switched = false
+            else
+                underline = (mp.get_time() * blink_rate % 2 < 1) and underline_on or underline_off
+            end
+            str = str .. selection_color .. underline .. selection_border_color .. history[history_position][i] .. '{\\r}' .. fb
         else
             str = str .. history[history_position][i]
         end
     end
-    mp.osd_message("Seek to: " .. ass_begin .. str .. ass_end, timer_duration)
+    mp.osd_message(ass_begin .. fb .. "Seek to: " .. str .. ass_end, timer_duration)
 end
 
 function copy_history_to_last()
@@ -65,6 +86,7 @@ function shift_cursor(left)
     else
         cursor_position = math.min(cursor_position + 1, 9)
     end
+    digit_switched = true
 end
 
 function current_time_as_sec(time)
@@ -146,8 +168,8 @@ function set_active()
         mp.add_forced_key_binding(key, "seek-to-"..key, func, {repeatable=true})
     end
     show_seeker()
-    timer = mp.add_periodic_timer(timer_duration, show_seeker)
     active = true
+    blink_timer = mp.add_periodic_timer(1 / blink_rate, show_seeker)
 end
 
 function set_inactive()
@@ -160,8 +182,8 @@ function set_inactive()
         history[#history][i] = 0
     end
     history_position = #history  -- This resets timestamp to 0 after it was closed while history entry was selected
-    timer:kill()
     active = false
+    blink_timer:kill()
 end
 
 function subprocess(args)
