@@ -155,6 +155,11 @@ function set_inactive()
     for key, _ in pairs(key_mappings) do
         mp.remove_key_binding("seek-to-"..key)
     end
+    -- Reset timestamp back to 0 when closed after entering it manually
+    for i = 1, 9 do
+        history[#history][i] = 0
+    end
+    history_position = #history  -- This resets timestamp to 0 after it was closed while history entry was selected
     timer:kill()
     active = false
 end
