@@ -198,13 +198,63 @@ end
 
 function paste_timestamp()
     local clipboard = get_clipboard()
-    if clipboard == nil then return end
+    if clipboard == nil or not clipboard:find("%d[.:]") then return end
 
-    timestamp = clipboard:match("%d*:?%d+:[0-5][0-9]%.?%d*")
-    if timestamp ~= nil then
-        mp.osd_message("Timestamp pasted: " .. timestamp)
+    local hours, minutes, seconds, milliseconds = clipboard:match("(%d+):(%d+):(%d+)%.?(%d*)")
+    if not hours then
+        minutes, seconds, milliseconds = clipboard:match("(%d+):(%d+)%.?(%d*)")
+        if not minutes then
+            seconds, milliseconds = clipboard:match("(%d+)%.?(%d*)")
+            minutes = 0
+        end
+        hours = 0
+    end
+
+    if seconds then
+        local total_seconds = tonumber(seconds)
+        minutes = minutes + math.floor(total_seconds / 60)  -- Convert available seconds to minutes
+        seconds = total_seconds % 60
+    end
+    
+    if minutes then
+        local total_minutes = tonumber(minutes)
+        hours   = hours + math.floor(total_minutes / 60)  -- Convert available minutes to hours
+        minutes = total_minutes % 60
+    end
+
+    if hours and minutes and seconds then
+        milliseconds = milliseconds and (milliseconds .. string.rep("0", 3 - #milliseconds)):sub(1, 3) or 0
+
+        local timestamp = string.format("%02d:%02d:%02d.%03d", hours, minutes, seconds, milliseconds)   -- Format timestamp HH:MM:SS:sss
+        local timestamp_time = hours * 3600 + minutes * 60 + seconds + milliseconds / 1000   -- Total time in seconds
+        local duration = mp.get_property_native("duration")
+        -- If the total time is greater than the duration, return without seeking
+        if timestamp_time > duration then
+            set_inactive()
+            mp.osd_message("The timestamp is longer than the duration of the video")
+            mp.msg.warn("The timestamp is longer than the duration of the video")
+            return
+        end
+
+        -- Split the formatted timestamp into individual digits
+        local timestamp_digits = {timestamp:match("(%d)(%d):(%d)(%d):(%d)(%d)%.(%d)(%d)(%d)")}
+        -- Add the pasted timestamp to the history table
+        for i = 1, 9 do
+            history[#history][i] = tonumber(timestamp_digits[i])
+        end
+        -- Add a new entry if the current timestamp is different from the last one in the history,
+        if #history == 1 or not time_equal(history[history_position], history[#history - 1]) then
+            history[#history + 1] = {}
+            history_position = #history
+        end
+
+        set_inactive()
+        mp.osd_message("Seeking to: " .. timestamp)
         mp.commandv("osd-bar", "seek", timestamp, "absolute")
+
     else
+        set_inactive()
+        mp.osd_message("No pastable timestamp found!")
         msg.warn("No pastable timestamp found!")
     end
 end
