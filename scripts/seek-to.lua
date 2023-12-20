@@ -23,14 +23,14 @@ local history_position = 1
 -- pretty hacky tbh
 local blink_timer = nil
 local timer_duration = 3
-local blink_rate = 2	-- ( 1 / blink_rate )
+local blink_rate = 2					-- ( 1 / blink_rate )
 
 local selection_color = "{\\c&46CFFF&}"
 local selection_border_color = ""			-- "{\\3c&H0000FF&}"
 
 local underline_on = "{\\u1}"				-- Enable underline
 local underline_off = "{\\u0}"				-- Disable underline
-local underline = underline_on				-- Always start with underline on
+local underline_forced = true				-- Always start with underline on
 
 local ss = "{\\fscx0}"					-- Scale 0 to limit additional width of the hairspace
 local se = "{\\fscx100}"				-- Reset scale
@@ -44,9 +44,10 @@ function show_seeker()
     for i = 1, 9 do
         str = str .. prepend_char[i]
         if i == cursor_position then
-            if digit_switched then -- Force underline into _on state after switching to another digit
+            if underline_forced or digit_switched then	-- Force underline into _on state on start or after switching to another digit
                 underline = underline_on
-                digit_switched = false
+                underline_forced = false
+		digit_switched = false
             else
                 underline = (mp.get_time() * blink_rate % 2 < 1) and underline_on or underline_off
             end
@@ -181,6 +182,7 @@ function set_inactive()
         history[#history][i] = 0
     end
     history_position = #history  -- This resets timestamp to 0 after it was closed while history entry was selected
+    underline_forced = true
     active = false
     blink_timer:kill()
 end
