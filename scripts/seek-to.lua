@@ -25,20 +25,19 @@ local blink_timer = nil
 local timer_duration = 3
 local blink_rate = 2	-- ( 1 / blink_rate )
 
+local selection_color = "{\\c&46CFFF&}"
+local selection_border_color = ""			-- "{\\3c&H0000FF&}"
+
+local underline_on = "{\\u1}"				-- Enable underline
+local underline_off = "{\\u0}"				-- Disable underline
+local underline = underline_on				-- Always start with underline on
+
+local ss = "{\\fscx0}"					-- Scale 0 to limit additional width of the hairspace
+local se = "{\\fscx100}"				-- Reset scale
+local fb = "{\\b1}"					-- Force bold font to even out the spacing
+local hs = ss .. string.char(0xE2, 0x80, 0x8A) .. se 	-- Insert 'hair space' after first digit to avoid shifting when two 1's are beside each other (11:11:11.111)
 
 function show_seeker()
-    local selection_color = "{\\c&46CFFF&}"
-    local selection_border_color = ""		-- "{\\3c&H0000FF&}"
-
-    local underline_on = "{\\u1}"		-- Enable underline
-    local underline_off = "{\\u0}"		-- Disable underline
-    local underline = "{\\u1}"			-- Always start with underline on
-
-    local ss = "{\\fscx0}"			-- Scale 0 to limit additional width of the hairspace
-    local se = "{\\fscx100}"			-- Reset scale
-    local fb = "{\\b1}"				-- Force bold font to even out the spacing
-    local hs = ss .. string.char(0xE2, 0x80, 0x8A) .. se -- Insert 'hair space' after first digit to avoid shifting when two 1's are beside each other (11:11:11.111)
-
     local prepend_char = {'','' .. hs,':','' .. hs,':','' .. hs,'.','' .. hs,'' .. hs}
     local str = ''
 
@@ -264,7 +263,7 @@ function paste_timestamp()
         for i = 1, 9 do
             history[#history][i] = tonumber(timestamp_digits[i])
         end
-        -- Add a new entry if the current timestamp is different from the last one in the history,
+        -- Add a new entry if the current timestamp is different from the last one in the history
         if #history == 1 or not time_equal(history[history_position], history[#history - 1]) then
             history[#history + 1] = {}
             history_position = #history
