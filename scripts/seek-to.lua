@@ -1,4 +1,10 @@
 -- Original script from https://github.com/occivink/mpv-scripts/blob/master/scripts/seek-to.lua
+local o = {
+    mouse_controls = true,
+    selection_color = "FFCF46",
+    selection_border_color = "",
+}
+(require 'mp.options').read_options(o)
 
 local assdraw = require 'mp.assdraw'
 local utils = require 'mp.utils'
@@ -25,9 +31,6 @@ local blink_timer = nil
 local timer_duration = 3
 local blink_rate = 2					-- ( 1 / blink_rate )
 
-local selection_color = "{\\c&46CFFF&}"
-local selection_border_color = ""			-- "{\\3c&H0000FF&}"
-
 local underline_on = "{\\u1}"				-- Enable underline
 local underline_off = "{\\u0}"				-- Disable underline
 local underline_forced = true				-- Always start with underline on
@@ -36,6 +39,10 @@ local ss = "{\\fscx0}"					-- Scale 0 to limit additional width of the hairspace
 local se = "{\\fscx100}"				-- Reset scale
 local fb = "{\\b1}"					-- Force bold font to even out the spacing
 local hs = ss .. string.char(0xE2, 0x80, 0x8A) .. se 	-- Insert 'hair space' after first digit to avoid shifting when two 1's are beside each other (11:11:11.111)
+
+-- Convert RRGGBB to BBGGRR for user convenience
+local selection_color		= string.format("{\\c&%s}", o.selection_color:gsub("(%x%x)(%x%x)(%x%x)","%3%2%1"))
+local selection_border_color	= string.format("{\\3c&%s}", o.selection_border_color:gsub("(%x%x)(%x%x)(%x%x)","%3%2%1"))
 
 function show_seeker()
     local prepend_char = {'','' .. hs,':','' .. hs,':','' .. hs,'.','' .. hs,'' .. hs}
@@ -146,6 +153,16 @@ local key_mappings = {
     ESC		= function() set_inactive() end,
     ["ctrl+v"]	= function() paste_timestamp() end
 }
+
+-- Mouse controls
+if o.mouse_controls then
+    key_mappings.WHEEL_UP 	= function() shift_cursor(true) show_seeker() end
+    key_mappings.WHEEL_DOWN 	= function() shift_cursor(false) show_seeker() end
+    key_mappings.MBTN_RIGHT 	= function() backspace() show_seeker() end
+    key_mappings.MBTN_RIGHT_DBL = function() return end
+    key_mappings.MBTN_MID 	= function() seek_to() set_inactive() end
+end
+
 for i = 0, 9 do
     local func = function() change_number(i) show_seeker() end
     key_mappings[string.format("KP%d", i)] = func
