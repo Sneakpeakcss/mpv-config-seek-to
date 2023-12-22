@@ -115,7 +115,15 @@ end
 
 function seek_to()
     copy_history_to_last()
-    mp.commandv("osd-bar", "seek", current_time_as_sec(history[history_position]), "absolute")
+    local seek_time = current_time_as_sec(history[history_position])
+    local duration = mp.get_property_native("duration")
+    if seek_time > duration then
+        mp.osd_message("The timestamp is longer than the duration of the video")
+        mp.msg.warn("The timestamp is longer than the duration of the video")
+        message_displayed = true
+        return
+    end
+    mp.commandv("osd-bar", "seek", seek_time, "absolute")
     --deduplicate consecutive timestamps
     if #history == 1 or not time_equal(history[history_position], history[#history - 1]) then
         history[#history + 1] = {}
@@ -190,7 +198,9 @@ function set_active()
 end
 
 function set_inactive()
-    mp.osd_message("")
+    if not message_displayed then
+        mp.osd_message("")
+    end
     for key, _ in pairs(key_mappings) do
         mp.remove_key_binding("seek-to-"..key)
     end
@@ -199,6 +209,7 @@ function set_inactive()
         history[#history][i] = 0
     end
     history_position = #history  -- This resets timestamp to 0 after it was closed while history entry was selected
+    message_displayed = false
     underline_forced = true
     active = false
     blink_timer:kill()
