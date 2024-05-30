@@ -153,6 +153,7 @@ end
 local key_mappings = {
     LEFT	= function() shift_cursor(true) show_seeker() end,
     RIGHT	= function() shift_cursor(false) show_seeker() end,
+    SPACE	= function() shift_cursor(false) show_seeker() end,
     UP		= function() history_move(true) show_seeker() end,
     DOWN	= function() history_move(false) show_seeker() end,
     BS		= function() backspace() show_seeker() end,
