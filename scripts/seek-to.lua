@@ -63,7 +63,8 @@ function show_seeker()
             str = str .. history[history_position][i]
         end
     end
-    mp.osd_message(ass_begin .. fb .. "Seek to: " .. str .. ass_end, timer_duration)
+    local prefix = seek_from_end and "-" or ""
+    mp.osd_message(ass_begin .. fb .. "Seek to: " .. prefix .. str .. ass_end, timer_duration)
 end
 
 function copy_history_to_last()
@@ -123,7 +124,8 @@ function seek_to()
         message_displayed = true
         return
     end
-    mp.commandv("osd-bar", "seek", seek_time, "absolute")
+    local prefix = seek_from_end and "-" or ""
+    mp.commandv("osd-bar", "seek", prefix .. seek_time, "absolute")
     --deduplicate consecutive timestamps
     if #history == 1 or not time_equal(history[history_position], history[#history - 1]) then
         history[#history + 1] = {}
@@ -150,6 +152,11 @@ function history_move(up)
     end
 end
 
+function toggle_seek_mode()
+    seek_from_end = not seek_from_end
+    show_seeker()
+end
+
 local key_mappings = {
     LEFT        = function() shift_cursor(true) show_seeker() end,
     RIGHT       = function() shift_cursor(false) show_seeker() end,
@@ -160,7 +167,8 @@ local key_mappings = {
     KP_ENTER    = function() seek_to() set_inactive() end,
     ENTER       = function() seek_to() set_inactive() end,
     ESC         = function() set_inactive() end,
-    ["ctrl+v"]  = function() paste_timestamp() end
+    ["ctrl+v"]  = function() paste_timestamp() end,
+    ["-"]       = function() toggle_seek_mode() end
 }
 
 -- Mouse controls
@@ -251,6 +259,7 @@ end
 function paste_timestamp()
     local clipboard = get_clipboard()
     if clipboard == nil or not clipboard:find("%d[.:]") then return end
+    local is_negative = clipboard:sub(1, 1) == "-"
 
     local hours, minutes, seconds, milliseconds = clipboard:match("(%d+):(%d+):(%d+)%.?(%d*)")
     if not hours then
@@ -277,7 +286,7 @@ function paste_timestamp()
     if hours and minutes and seconds then
         milliseconds = milliseconds and (milliseconds .. string.rep("0", 3 - #milliseconds)):sub(1, 3) or 0
 
-        local timestamp = string.format("%02d:%02d:%02d.%03d", hours, minutes, seconds, milliseconds)   -- Format timestamp HH:MM:SS:sss
+        local timestamp = string.format("%s%02d:%02d:%02d.%03d", is_negative and "-" or "", hours, minutes, seconds, milliseconds)   -- Format timestamp HH:MM:SS:sss
         local timestamp_time = hours * 3600 + minutes * 60 + seconds + milliseconds / 1000   -- Total time in seconds
         local duration = mp.get_property_native("duration")
         -- If the total time is greater than the duration, return without seeking
