@@ -29,20 +29,20 @@ local history_position = 1
 -- pretty hacky tbh
 local blink_timer = nil
 local timer_duration = 3
-local blink_rate = 2					-- ( 1 / blink_rate )
+local blink_rate = 2                                    -- ( 1 / blink_rate )
 
-local underline_on = "{\\u1}"				-- Enable underline
-local underline_off = "{\\u0}"				-- Disable underline
-local underline_forced = true				-- Always start with underline on
+local underline_on = "{\\u1}"                           -- Enable underline
+local underline_off = "{\\u0}"                          -- Disable underline
+local underline_forced = true                           -- Always start with underline on
 
-local ss = "{\\fscx0}"					-- Scale 0 to limit additional width of the hairspace
-local se = "{\\fscx100}"				-- Reset scale
-local fb = "{\\b1}"					-- Force bold font to even out the spacing
-local hs = ss .. string.char(0xE2, 0x80, 0x8A) .. se 	-- Insert 'hair space' after first digit to avoid shifting when two 1's are beside each other (11:11:11.111)
+local ss = "{\\fscx0}"                                  -- Scale 0 to limit additional width of the hairspace
+local se = "{\\fscx100}"                                -- Reset scale
+local fb = "{\\b1}"                                     -- Force bold font to even out the spacing
+local hs = ss .. string.char(0xE2, 0x80, 0x8A) .. se    -- Insert 'hair space' after first digit to avoid shifting when two 1's are beside each other (11:11:11.111)
 
 -- Convert RRGGBB to BBGGRR for user convenience
-local selection_color		= string.format("{\\c&%s}", o.selection_color:gsub("(%x%x)(%x%x)(%x%x)","%3%2%1"))
-local selection_border_color	= string.format("{\\3c&%s}", o.selection_border_color:gsub("(%x%x)(%x%x)(%x%x)","%3%2%1"))
+local selection_color       = string.format("{\\c&%s}", o.selection_color:gsub("(%x%x)(%x%x)(%x%x)","%3%2%1"))
+local selection_border_color    = string.format("{\\3c&%s}", o.selection_border_color:gsub("(%x%x)(%x%x)(%x%x)","%3%2%1"))
 
 function show_seeker()
     local prepend_char = {'','' .. hs,':','' .. hs,':','' .. hs,'.','' .. hs,'' .. hs}
@@ -51,10 +51,10 @@ function show_seeker()
     for i = 1, 9 do
         str = str .. prepend_char[i]
         if i == cursor_position then
-            if underline_forced or digit_switched then	-- Force underline into _on state on start or after switching to another digit
+            if underline_forced or digit_switched then  -- Force underline into _on state on start or after switching to another digit
                 underline = underline_on
                 underline_forced = false
-		digit_switched = false
+                digit_switched = false
             else
                 underline = (mp.get_time() * blink_rate % 2 < 1) and underline_on or underline_off
             end
@@ -151,25 +151,25 @@ function history_move(up)
 end
 
 local key_mappings = {
-    LEFT	= function() shift_cursor(true) show_seeker() end,
-    RIGHT	= function() shift_cursor(false) show_seeker() end,
-    SPACE	= function() shift_cursor(false) show_seeker() end,
-    UP		= function() history_move(true) show_seeker() end,
-    DOWN	= function() history_move(false) show_seeker() end,
-    BS		= function() backspace() show_seeker() end,
-    KP_ENTER	= function() seek_to() set_inactive() end,
-    ENTER	= function() seek_to() set_inactive() end,
-    ESC		= function() set_inactive() end,
-    ["ctrl+v"]	= function() paste_timestamp() end
+    LEFT        = function() shift_cursor(true) show_seeker() end,
+    RIGHT       = function() shift_cursor(false) show_seeker() end,
+    SPACE       = function() shift_cursor(false) show_seeker() end,
+    UP          = function() history_move(true) show_seeker() end,
+    DOWN        = function() history_move(false) show_seeker() end,
+    BS          = function() backspace() show_seeker() end,
+    KP_ENTER    = function() seek_to() set_inactive() end,
+    ENTER       = function() seek_to() set_inactive() end,
+    ESC         = function() set_inactive() end,
+    ["ctrl+v"]  = function() paste_timestamp() end
 }
 
 -- Mouse controls
 if o.mouse_controls then
-    key_mappings.WHEEL_UP 	= function() shift_cursor(true) show_seeker() end
-    key_mappings.WHEEL_DOWN 	= function() shift_cursor(false) show_seeker() end
-    key_mappings.MBTN_RIGHT 	= function() backspace() show_seeker() end
+    key_mappings.WHEEL_UP       = function() shift_cursor(true) show_seeker() end
+    key_mappings.WHEEL_DOWN     = function() shift_cursor(false) show_seeker() end
+    key_mappings.MBTN_RIGHT     = function() backspace() show_seeker() end
     key_mappings.MBTN_RIGHT_DBL = function() return end
-    key_mappings.MBTN_MID 	= function() seek_to() set_inactive() end
+    key_mappings.MBTN_MID       = function() seek_to() set_inactive() end
 end
 
 for i = 0, 9 do
