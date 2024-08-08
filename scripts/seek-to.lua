@@ -63,7 +63,7 @@ function show_seeker()
             str = str .. history[history_position][i]
         end
     end
-    local prefix = seek_from_end and "-" or ""
+    local prefix = seek_from_end and "\u{21BA}" or (seek_sub and "\u{229D}" or (seek_add and "\u{2295}" or ""))
     mp.osd_message(ass_begin .. fb .. "Seek to: " .. prefix .. str .. ass_end, timer_duration)
 end
 
@@ -118,6 +118,13 @@ function seek_to()
     copy_history_to_last()
     local seek_time = current_time_as_sec(history[history_position])
     local duration = mp.get_property_native("duration")
+    local current_time = mp.get_property_native("time-pos")
+    if (seek_add or seek_sub or seek_from_end) and seek_time == 0 then return end   -- Avoid jumps in certain video types that can happen even with empty timestamp
+    if seek_sub then
+        seek_time = math.max(0, current_time - seek_time)
+    elseif seek_add then
+        seek_time = current_time + seek_time
+    end
     if seek_time > duration then
         mp.osd_message("The timestamp is longer than the duration of the video")
         mp.msg.warn("The timestamp is longer than the duration of the video")
@@ -152,8 +159,17 @@ function history_move(up)
     end
 end
 
-function toggle_seek_mode()
-    seek_from_end = not seek_from_end
+function toggle_seek_mode(mode)
+    if mode == "seek_from_end" then
+        seek_from_end = not seek_from_end
+        seek_add, seek_sub = false, false
+    elseif mode == "seek_add" then
+        seek_add = not seek_add
+        seek_from_end, seek_sub = false, false
+    elseif mode == "seek_sub" then
+        seek_sub = not seek_sub
+        seek_from_end, seek_add = false, false
+    end
     show_seeker()
 end
 
@@ -168,7 +184,10 @@ local key_mappings = {
     ENTER       = function() seek_to() set_inactive() end,
     ESC         = function() set_inactive() end,
     ["ctrl+v"]  = function() paste_timestamp() end,
-    ["-"]       = function() toggle_seek_mode() end
+    ["-"]       = function() toggle_seek_mode("seek_sub") end,
+    ["+"]       = function() toggle_seek_mode("seek_add") end,
+    ["*"]       = function() toggle_seek_mode("seek_from_end") end,
+    ["="]       = function() toggle_seek_mode("seek_from_end") end,
 }
 
 -- Mouse controls
