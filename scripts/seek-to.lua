@@ -174,20 +174,22 @@ function toggle_seek_mode(mode)
 end
 
 local key_mappings = {
-    LEFT        = function() shift_cursor(true) show_seeker() end,
-    RIGHT       = function() shift_cursor(false) show_seeker() end,
-    SPACE       = function() shift_cursor(false) show_seeker() end,
-    UP          = function() history_move(true) show_seeker() end,
-    DOWN        = function() history_move(false) show_seeker() end,
-    BS          = function() backspace() show_seeker() end,
-    KP_ENTER    = function() seek_to() set_inactive() end,
-    ENTER       = function() seek_to() set_inactive() end,
-    ESC         = function() set_inactive() end,
-    ["ctrl+v"]  = function() paste_timestamp() end,
-    ["-"]       = function() toggle_seek_mode("seek_sub") end,
-    ["+"]       = function() toggle_seek_mode("seek_add") end,
-    ["*"]       = function() toggle_seek_mode("seek_from_end") end,
-    ["="]       = function() toggle_seek_mode("seek_from_end") end,
+    LEFT            = function() shift_cursor(true) show_seeker() end,
+    RIGHT           = function() shift_cursor(false) show_seeker() end,
+    SPACE           = function() shift_cursor(false) show_seeker() end,
+    UP              = function() history_move(true) show_seeker() end,
+    DOWN            = function() history_move(false) show_seeker() end,
+    BS              = function() backspace() show_seeker() end,
+    KP_ENTER        = function() seek_to() set_inactive() end,
+    ENTER           = function() seek_to() set_inactive() end,
+    ESC             = function() set_inactive() end,
+    ["ctrl+v"]      = function() paste_timestamp() end,
+    ["KP_ADD"]      = function() toggle_seek_mode("seek_add") end,
+    ["KP_SUBTRACT"] = function() toggle_seek_mode("seek_sub") end,
+    ["KP_MULTIPLY"] = function() toggle_seek_mode("seek_from_end") end,
+    ["-"]           = function() toggle_seek_mode("seek_sub") end,
+    ["+"]           = function() toggle_seek_mode("seek_add") end,
+    ["="]           = function() toggle_seek_mode("seek_from_end") end,
 }
 
 -- Mouse controls
